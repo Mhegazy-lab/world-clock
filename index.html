@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="application-name" content="World Clock">
+<meta name="description" content="Live world times for five cities with day-difference indicators.">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>World Clock</title>
+<style>
+:root{--accent:#818CF8;--bg:#0B0E1A;--card:#141829;--text:#F1F2FF;--dim:#9AA0C7;}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{-webkit-user-select:none;user-select:none;background:var(--bg);color:var(--text);
+  font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;
+  display:flex;align-items:center;justify-content:center;min-height:100dvh}
+.app{width:min(480px,100vw - 24px);height:100dvh;max-height:780px;display:flex;flex-direction:column;padding:16px 14px 12px}
+header{text-align:center;margin-bottom:10px}
+header h1{font-size:22px;letter-spacing:.06em;color:var(--accent)}
+header .sub{font-size:12px;color:var(--dim);margin-top:2px}
+#rows{flex:1;display:flex;flex-direction:column;gap:8px;justify-content:center;min-height:0}
+.row{background:var(--card);border:1px solid #232949;border-radius:14px;padding:10px 12px;
+  display:flex;align-items:center;gap:10px;min-height:64px;outline:none}
+.row .city{flex:1;min-width:0}
+.row .city .name{font-size:17px;font-weight:600}
+.row .city .badge{font-size:10px;font-weight:700;color:#0B0E1A;background:var(--accent);
+  border-radius:6px;padding:2px 6px;margin-left:6px;vertical-align:2px}
+.row .time{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.row .daydiff{font-size:13px;font-weight:700;color:var(--dim);min-width:64px;text-align:right}
+.row.home{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.row.home .daydiff{color:var(--accent)}
+.row[data-focusable]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+footer{text-align:center;font-size:11px;color:var(--dim);margin-top:8px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>WORLD CLOCK</h1>
+    <div class="sub" id="today"></div>
+  </header>
+  <div id="rows"></div>
+  <footer>times tick live &middot; day vs Cairo</footer>
+</div>
+<script>
+(function(){
+"use strict";
+var ZONES=[
+  {city:"Cairo",tz:"Africa/Cairo",home:true},
+  {city:"Dubai",tz:"Asia/Dubai"},
+  {city:"London",tz:"Europe/London"},
+  {city:"New York",tz:"America/New_York"},
+  {city:"Tokyo",tz:"Asia/Tokyo"}
+];
+var timeFmt={};
+function timeFormatter(tz){
+  if(!timeFmt[tz]) timeFmt[tz]=new Intl.DateTimeFormat("en-GB",{timeZone:tz,hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false});
+  return timeFmt[tz];
+}
+var dayFmt={};
+function dayFormatter(tz){
+  if(!dayFmt[tz]) dayFmt[tz]=new Intl.DateTimeFormat("en-CA",{timeZone:tz,year:"numeric",month:"2-digit",day:"2-digit"});
+  return dayFmt[tz];
+}
+function zoneDate(tz,now){return dayFormatter(tz).format(now);}
+function dayDiff(now,tz,refTz){
+  var a=zoneDate(tz,now),b=zoneDate(refTz,now);
+  if(a===b) return "same day";
+  return a>b?"+1d":"\u22121d";
+}
+var rowsEl=document.getElementById("rows");
+var rows=[];
+ZONES.forEach(function(z,i){
+  var d=document.createElement("div");
+  d.className="row"+(z.home?" home":"");
+  d.tabIndex=0;d.setAttribute("data-focusable","");
+  d.innerHTML='<div class="city"><span class="name">'+z.city+'</span>'+(z.home?'<span class="badge">HOME</span>':"")+'</div>'+
+    '<div class="time">--:--:--</div><div class="daydiff"></div>';
+  rowsEl.appendChild(d);
+  rows.push({el:d,tz:z.tz,timeEl:d.querySelector(".time"),ddEl:d.querySelector(".daydiff")});
+});
+function tick(){
+  var now=new Date();
+  var cairoToday=dayFormatter("Africa/Cairo").format(now);
+  document.getElementById("today").textContent=cairoToday+" \u00b7 Cairo time";
+  rows.forEach(function(r){
+    r.timeEl.textContent=timeFormatter(r.tz).format(now);
+    r.ddEl.textContent=dayDiff(now,r.tz,"Africa/Cairo");
+  });
+}
+tick();
+setInterval(tick,1000);
+document.addEventListener("keydown",function(e){
+  var idx=rows.indexOf(document.activeElement);
+  if(e.key==="ArrowDown"||e.key==="ArrowRight"){
+    e.preventDefault();
+    rows[(idx+1+rows.length)%rows.length].el.focus();
+  }else if(e.key==="ArrowUp"||e.key==="ArrowLeft"){
+    e.preventDefault();
+    rows[(idx-1+rows.length)%rows.length].el.focus();
+  }
+});
+rows[0].el.focus();
+})();
+</script>
+</body>
+</html>
