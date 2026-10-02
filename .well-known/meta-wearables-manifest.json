@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "name": "World Clock",
+  "description": "Live world times for five cities with day-difference indicators.",
+  "appearance": {
+    "theme_color": "#818CF8",
+    "icon": {
+      "src": "../icon-mono.png",
+      "type": "monochrome"
+    },
+    "icon_background": {
+      "colors": [
+        "#818CF8",
+        "#4C56B8",
+        "#2A3178",
+        "#0F1226"
+      ],
+      "stops": [
+        0.0,
+        0.33,
+        0.66,
+        1.0
+      ],
+      "inner_glow_color": "#C7D2FE"
+    }
+  }
+}
